@@ -2573,6 +2573,11 @@ function getLength(buf, p) {
   if (!(initial & 0x80)) {
     return initial;
   }
+
+  if(buf[p.place] === 0x00) {
+    return false;
+  }
+
   var octetLen = initial & 0xf;
 
   // Indefinite length or overflow
@@ -2624,6 +2629,9 @@ Signature.prototype._importDER = function _importDER(data, enc) {
   if (data[p.place++] !== 0x02) {
     return false;
   }
+  if ((data[p.place] & 128) !== 0) {
+    return false;
+  }
   var rlen = getLength(data, p);
   if (rlen === false) {
     return false;
@@ -2638,6 +2646,9 @@ Signature.prototype._importDER = function _importDER(data, enc) {
     return false;
   }
   if (data.length !== slen + p.place) {
+    return false;
+  }
+  if ((data[p.place] & 128) !== 0) {
     return false;
   }
   var s = data.slice(p.place, slen + p.place);
@@ -2948,6 +2959,7 @@ function Signature(eddsa, sig) {
     sig = parseBytes(sig);
 
   if (Array.isArray(sig)) {
+    assert(sig.length === eddsa.encodingLength * 2, 'Signature has invalid size');
     sig = {
       R: sig.slice(0, eddsa.encodingLength),
       S: sig.slice(eddsa.encodingLength),
@@ -8850,7 +8862,7 @@ utils.encode = function encode(arr, enc) {
 },{}],35:[function(require,module,exports){
 module.exports={
   "name": "elliptic",
-  "version": "6.5.4",
+  "version": "6.5.4-sp2",
   "description": "EC cryptography",
   "main": "lib/elliptic.js",
   "files": [
@@ -8860,7 +8872,7 @@ module.exports={
     "lint": "eslint lib test",
     "lint:fix": "npm run lint -- --fix",
     "unit": "istanbul test _mocha --reporter=spec test/index.js",
-    "test": "npm run lint && npm run unit",
+    "test": "npm run unit",
     "version": "grunt dist && git add dist/"
   },
   "repository": {
